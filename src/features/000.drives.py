@@ -338,7 +338,7 @@ Drives.drop(['RunOver10_pd', 'PassOver20_pd', 'PointsScored_pd', 'Plays_pd', 'dr
 
 
 # Remove columns not used during classification
-Drives.drop(['game_id', 'drive', 'posteam', 'defteam', 'game_half'], axis =1, inplace = True)
+Drives.drop(['defteam', 'game_half'], axis =1, inplace = True)
 
 
 # Clean up naming conventions for intepretability

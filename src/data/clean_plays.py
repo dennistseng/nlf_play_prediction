@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar 10 20:39:57 2020
+### DSC 672
+# Group 3
+# Plays data cleaning
 
-@author: halfc
-"""
 
 #import libraries
 import os
@@ -23,28 +21,8 @@ from collections import Counter
 ## Load and Clean Play By Play Dataset
 #######################################################
 
-# Load datasets
-rawPlayByPlay = pd.read_csv("../../data/raw/ConsolidateOutput.csv", low_memory = False)
-nfl_weather = pd.read_csv("../../data/raw/Weather_NFL.csv", low_memory = False)
-
-# Clean weather and aggregate weather data to merge to play-by-play data
-nfl_weather.rename(columns={'DOME':'Dome', 'Afternoon':'Time'}, inplace=True)
-nfl_weather['Dome'] = np.where(nfl_weather['Dome'] == 'NO', 0, 1)
-#nfl_weather['Temperature'] = nfl_weather['Temperature'].astype(float)
-nfl_weather = nfl_weather.groupby(['game_id']).agg({'Rain': np.min, 'Snow': np.min, 'Wind':np.min, 'Fog':np.min,
-                                                    'Dome':np.mean, 'Time':np.min})
-
-# Clean some values
-nfl_weather['Time'] = np.where(nfl_weather['Time'] == 'AfterNoon', 'Afternoon', nfl_weather['Time'])
-nfl_weather['Time'] = np.where(nfl_weather['Time'] == 'afternoon', 'Afternoon', nfl_weather['Time'])
-nfl_weather['Time'] = np.where(nfl_weather['Time'] == 'AterNoon', 'Afternoon', nfl_weather['Time'])
-nfl_weather['Time'] = np.where(nfl_weather['Time'] == 'AftterNoon', 'Afternoon', nfl_weather['Time'])
-nfl_weather['Time'] = np.where(nfl_weather['Time'].str.strip() == 'afternoon', 'Afternoon', nfl_weather['Time'])
-nfl_weather['Time'] = np.where(nfl_weather['Time'] == 'noon', 'Noon', nfl_weather['Time'])
-
-
-rawPlayByPlay = pd.merge(rawPlayByPlay, nfl_weather, how='inner', on=['game_id'])
-
+# Load dataset
+rawPlayByPlay = pd.read_csv("../../data/raw/NFL Play by Play 2009-2018 (v5).csv", low_memory = False)
 
 # Remove any colums deemed unecessary for both pre-processing and analysis 
 del rawPlayByPlay['fumble_recovery_1_player_id']
@@ -161,7 +139,7 @@ del rawPlayByPlay['comp_yac_wpa']
 del rawPlayByPlay['comp_yac_epa']
 del rawPlayByPlay['comp_air_epa']
 del rawPlayByPlay['comp_air_wpa']
-del rawPlayByPlay['no_score_prob']
+#del rawPlayByPlay['no_score_prob']
 del rawPlayByPlay['opp_fg_prob']
 del rawPlayByPlay['opp_safety_prob']
 del rawPlayByPlay['opp_td_prob']
@@ -172,11 +150,11 @@ del rawPlayByPlay['epa']
 del rawPlayByPlay['ep']
 del rawPlayByPlay['wp']
 del rawPlayByPlay['wpa']
-del rawPlayByPlay['fg_prob']
-del rawPlayByPlay['safety_prob']
-del rawPlayByPlay['td_prob']
-del rawPlayByPlay['extra_point_prob']
-del rawPlayByPlay['two_point_conversion_prob']
+#del rawPlayByPlay['fg_prob']
+#del rawPlayByPlay['safety_prob']
+#del rawPlayByPlay['td_prob']
+#del rawPlayByPlay['extra_point_prob']
+#del rawPlayByPlay['two_point_conversion_prob']
 del rawPlayByPlay['def_wp']
 del rawPlayByPlay['home_wp']
 del rawPlayByPlay['away_wp']
@@ -211,8 +189,8 @@ del rawPlayByPlay['defteam_timeouts_remaining']
 del rawPlayByPlay['return_team']
 del rawPlayByPlay['return_yards']
 del rawPlayByPlay['return_touchdown']
-#del rawPlayByPlay['air_yards']
-#del rawPlayByPlay['yards_after_catch']
+del rawPlayByPlay['air_yards']
+del rawPlayByPlay['yards_after_catch']
 del rawPlayByPlay['punt_fair_catch']
 del rawPlayByPlay['home_team']
 del rawPlayByPlay['away_team']
@@ -238,12 +216,9 @@ del rawPlayByPlay['lateral_rush']
 del rawPlayByPlay['lateral_return']
 del rawPlayByPlay['timeout_team']
 del rawPlayByPlay['td_team']
-#del rawPlayByPlay['yrdln']
-#del rawPlayByPlay['half_seconds_remaining']
+del rawPlayByPlay['yrdln']
+del rawPlayByPlay['half_seconds_remaining']
 del rawPlayByPlay['total_home_raw_air_wpa']
-del rawPlayByPlay['touchback']
-
-
 
 # Remove any duplicate rows
 rawPlayByPlay.drop_duplicates(keep='first', inplace=True)
@@ -263,8 +238,6 @@ rawPlayByPlay['score_differential'].fillna(0, inplace=True)
 rawPlayByPlay['score_differential_post'].fillna(0, inplace=True)
 rawPlayByPlay['incomplete_pass'].fillna(0, inplace=True)
 rawPlayByPlay['timeout'].fillna(0, inplace=True)
-rawPlayByPlay['yards_after_catch'].fillna(0, inplace=True)
-rawPlayByPlay['air_yards'].fillna(0, inplace=True)
 
 # Set description strings to lowercase
 rawPlayByPlay['desc'] = rawPlayByPlay['desc'].str.lower()
@@ -368,25 +341,16 @@ rawPlayByPlay = rawPlayByPlay[~rawPlayByPlay.index.isin(Touchbacks.index)]
 # Remove 'no play' plays that were needed in case they were penalties, but not for actual drives
 rawPlayByPlay = rawPlayByPlay[~(rawPlayByPlay['play_type'] == "no_play")]
 
-# Take final plays 
-idx = rawPlayByPlay.groupby(['game_id', 'drive', 'posteam'])['game_seconds_remaining'].idxmin()
-FinalPlays = rawPlayByPlay.loc[idx]
-
 # Take out punts and field goals only if they're the last play in the drive
-PuntsAndFG = FinalPlays[((FinalPlays['play_type'] == 'field_goal') | (FinalPlays['play_type'] == 'punt'))]
+idx = rawPlayByPlay.groupby(['game_id', 'drive', 'posteam'])['game_seconds_remaining'].idxmin()
+PuntsAndFG = rawPlayByPlay.loc[idx]
+PuntsAndFG = PuntsAndFG[((PuntsAndFG['play_type'] == 'field_goal') | (PuntsAndFG['play_type'] == 'punt'))]
+
 FG = PuntsAndFG[PuntsAndFG['play_type'] == "field_goal"]
 FG = FG[['game_id','drive','posteam','points_earned']]
 FG['points_earned'] = 3
 FG.drop_duplicates(keep='first')
 
-# Determine the final outcomes (not plays) for every drive
-FinalPlays['drive_outcome'] = np.where(FinalPlays['play_type'] == "qb_kneel", 'qb_kneel', FinalPlays['play_type'])
-FinalPlays['drive_outcome'] = np.where(((FinalPlays['drive_outcome'] == 'run') & (FinalPlays['touchdown'] == 1)), 'touchdown', FinalPlays['drive_outcome']) 
-FinalPlays['drive_outcome'] = np.where(((FinalPlays['drive_outcome'] == 'pass') & (FinalPlays['touchdown'] == 1)), 'touchdown', FinalPlays['drive_outcome']) 
-FinalPlays['drive_outcome'] = np.where((((FinalPlays['drive_outcome'] == 'pass') | (FinalPlays['drive_outcome'] == 'run')) &  ((FinalPlays['interception'] == 1) | (FinalPlays['fumble_lost'] == 1))), 'turnover', FinalPlays['drive_outcome']) 
-FinalPlays['drive_outcome'] = np.where(((FinalPlays['drive_outcome'] == 'pass') | (FinalPlays['drive_outcome'] == 'run')) , 'turnover_on_downs', FinalPlays['drive_outcome']) 
-
-DriveOutcome = FinalPlays[['game_id', 'drive','posteam','drive_outcome']]
 
 # %%
 
@@ -426,7 +390,6 @@ last_plays['drive_outcome'] = np.where(last_plays['drive_outcome'] == '0', 'end_
 
 last_plays = last_plays[['game_id','posteam','drive','drive_outcome']]
 
-
 # %%
 # Removes punts and field goals from drives for 'clean' play-by-play
 
@@ -443,8 +406,6 @@ Runs.rename({'yards_gained': 'RunYardage'}, axis=1, inplace=True)
 DrivePlays = rawPlayByPlay[['game_id', 'drive','posteam','play_id']].groupby(['game_id', 'drive', 'posteam']).count()
 DrivePlays.rename({'play_id': 'Count'}, axis=1, inplace=True)
 
-del rawPlayByPlay['desc']
-
 # %%
 #########
 #This outputs final play by play data for analysis
@@ -458,4 +419,3 @@ FirstDown.to_csv('../../data/clean/FirstDown.csv')
 ThirdDown.to_csv('../../data/clean/ThirdDown.csv')
 Runs.to_csv('../../data/clean/Runs.csv')
 Passes.to_csv('../../data/clean/Passes.csv')
-DriveOutcome.to_csv('../../data/clean/DriveOutcome.csv')

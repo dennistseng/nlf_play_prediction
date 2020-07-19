@@ -154,3 +154,10 @@ model2.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics
 model2.summary()
 
 model2.fit(padded_inputs, padded_outputs, epochs=10, verbose=1)
+
+
+# plot history
+pyplot.plot(model.history['loss'], label='train')
+pyplot.plot(model.history['val_loss'], label='test')
+pyplot.legend()
+pyplot.show()
