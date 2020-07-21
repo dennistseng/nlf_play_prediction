@@ -4,6 +4,8 @@
 import numpy as np
 import pandas as pd
 
+import xgboost
+
 # %% 
 #######################################################
 ## Load and Clean Play By Play Dataset
