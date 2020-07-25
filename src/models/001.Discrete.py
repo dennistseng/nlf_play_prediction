@@ -77,18 +77,8 @@ del plays['sp']
 
 
 ### remove unecessary columns
-del plays['extra_point_result']
-del plays['two_point_conv_result']
-del plays['timeout']
-del plays['penalty_team']
-del plays['penalty_type']
-del plays['penalty_yards']
-del plays['defensive_two_point_attempt']
-del plays['defensive_two_point_conv']
-del plays['game_half']
-
-plays.drop(['punt_blocked', 'fumble_forced', 'fumble_not_forced', 'fumble_out_of_bounds', 'safety', 'penalty', 'fumble_lost', 'extra_point_attempt',
-            'two_point_attempt', 'field_goal_attempt', 'points_earned', 'yrdln', 'RunOver10', 'PassOver20', 'complete_pass', 'touchdown', 'rush_touchdown', 'pass_touchdown', 
+plays.drop(['fumble_forced', 'fumble_not_forced', 'fumble_out_of_bounds', 'safety', 'penalty', 'fumble_lost', 'extra_point_attempt',
+            'two_point_attempt', 'field_goal_attempt', 'points_earned', 'RunOver10', 'PassOver20', 'complete_pass', 'touchdown', 'rush_touchdown', 'pass_touchdown', 
             'rush_attempt', 'pass_attempt', 'qb_hit', 'tackled_for_loss', 'incomplete_pass', 'qb_kneel'], axis =1, inplace = True)
 
 
@@ -100,9 +90,11 @@ del plays['pass_location']
 del plays['run_gap']
 del plays['run_location']
 del plays['Time']
+del plays['GameYear']
 
 # Create Dummy Data
 plays['home'] = pd.get_dummies(plays['posteam_type'], drop_first=True)
+plays['game_half'] = pd.get_dummies(plays['game_half'], drop_first=True)
 del plays['posteam_type']
 plays = pd.get_dummies(plays, columns=['play_type'])
 
@@ -129,9 +121,8 @@ target_np = plays['target']
 del plays['target']
 
 data_np = plays.copy()
-
-# Create Dummy Variables
-
+#del data_np['index']
+data_np=pd.DataFrame(scale(data_np), columns = data_np.columns)
 
 # Split samples before normalizing data
 

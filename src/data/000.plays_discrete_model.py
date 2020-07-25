@@ -1,22 +1,15 @@
-# -*- coding: utf-8 -*-
 """
-Created on Tue Mar 10 20:39:57 2020
+Clean Module for NFL Play Prediction Project
+@author: Dennis Tseng
 
-@author: halfc
+Part of the DSC 672 Capstone Final Project Class
+Group 3: Dennis Tseng, Scott Elmore, Dongmin Sun
+
 """
 
 #import libraries
-import os
 import numpy as np
 import pandas as pd
-import math
-import sklearn as sk
-from sklearn.model_selection import train_test_split
-import pylab as pl
-import matplotlib.pyplot as plt
-import datetime
-from collections import Counter
-#from imblearn.datasets import make_imbalance
 
 # %% 
 #######################################################
@@ -24,353 +17,185 @@ from collections import Counter
 #######################################################
 
 # Load datasets
-rawPlayByPlay = pd.read_csv("../../data/raw/ConsolidateOutput.csv", low_memory = False)
+raw_play_by_play = pd.read_csv("../../data/raw/ConsolidateOutput.csv", low_memory = False)
 nfl_weather = pd.read_csv("../../data/raw/Weather_NFL.csv", low_memory = False)
 
-# Clean weather and aggregate weather data to merge to play-by-play data
-nfl_weather.rename(columns={'DOME':'Dome', 'Afternoon':'Time'}, inplace=True)
-nfl_weather['Dome'] = np.where(nfl_weather['Dome'] == 'NO', 0, 1)
-#nfl_weather['Temperature'] = nfl_weather['Temperature'].astype(float)
-nfl_weather = nfl_weather.groupby(['game_id']).agg({'Rain': np.min, 'Snow': np.min, 'Wind':np.min, 'Fog':np.min,
-                                                    'Dome':np.mean, 'Time':np.min})
-
-# Clean some values
-nfl_weather['Time'] = np.where(nfl_weather['Time'] == 'AfterNoon', 'Afternoon', nfl_weather['Time'])
-nfl_weather['Time'] = np.where(nfl_weather['Time'] == 'afternoon', 'Afternoon', nfl_weather['Time'])
-nfl_weather['Time'] = np.where(nfl_weather['Time'] == 'AterNoon', 'Afternoon', nfl_weather['Time'])
-nfl_weather['Time'] = np.where(nfl_weather['Time'] == 'AftterNoon', 'Afternoon', nfl_weather['Time'])
-nfl_weather['Time'] = np.where(nfl_weather['Time'].str.strip() == 'afternoon', 'Afternoon', nfl_weather['Time'])
-nfl_weather['Time'] = np.where(nfl_weather['Time'] == 'noon', 'Noon', nfl_weather['Time'])
-
-
-rawPlayByPlay = pd.merge(rawPlayByPlay, nfl_weather, how='inner', on=['game_id'])
-
-
+######
 # Remove any colums deemed unecessary for both pre-processing and analysis 
-del rawPlayByPlay['fumble_recovery_1_player_id']
-del rawPlayByPlay['fumble_recovery_1_team']
-del rawPlayByPlay['fumble_recovery_1_yards']
-del rawPlayByPlay['fumble_recovery_1_player_name']
-del rawPlayByPlay['fumble_recovery_2_player_id']
-del rawPlayByPlay['fumble_recovery_2_player_name']
-del rawPlayByPlay['fumble_recovery_2_team']
-del rawPlayByPlay['fumble_recovery_2_yards']
-del rawPlayByPlay['fumbled_1_team']
-del rawPlayByPlay['fumbled_1_player_name']
-del rawPlayByPlay['fumbled_1_player_id']
-del rawPlayByPlay['fumbled_2_player_id']
-del rawPlayByPlay['fumbled_2_player_name']
-del rawPlayByPlay['fumbled_2_team']
-del rawPlayByPlay['pass_defense_1_player_id']
-del rawPlayByPlay['pass_defense_1_player_name']
-del rawPlayByPlay['pass_defense_2_player_id']
-del rawPlayByPlay['pass_defense_2_player_name']
-del rawPlayByPlay['assist_tackle_4_player_id']
-del rawPlayByPlay['assist_tackle_4_player_name']
-del rawPlayByPlay['assist_tackle_4_team']
-del rawPlayByPlay['assist_tackle_3_team']
-del rawPlayByPlay['assist_tackle_3_player_name']
-del rawPlayByPlay['assist_tackle_3_player_id']
-del rawPlayByPlay['assist_tackle_2_player_id']
-del rawPlayByPlay['assist_tackle_2_player_name']
-del rawPlayByPlay['assist_tackle_2_team']
-del rawPlayByPlay['assist_tackle_1_player_id']
-del rawPlayByPlay['assist_tackle_1_player_name']
-del rawPlayByPlay['assist_tackle_1_team']
-del rawPlayByPlay['solo_tackle_2_player_name']
-del rawPlayByPlay['solo_tackle_1_player_name']
-del rawPlayByPlay['solo_tackle_2_team']
-del rawPlayByPlay['solo_tackle_1_team']
-del rawPlayByPlay['solo_tackle_1_player_id']
-del rawPlayByPlay['solo_tackle_2_player_id']
-del rawPlayByPlay['forced_fumble_player_2_player_name']
-del rawPlayByPlay['forced_fumble_player_2_player_id']
-del rawPlayByPlay['forced_fumble_player_2_team']
-del rawPlayByPlay['forced_fumble_player_1_player_name']
-del rawPlayByPlay['forced_fumble_player_1_player_id']
-del rawPlayByPlay['forced_fumble_player_1_team']
-del rawPlayByPlay['qb_hit_2_player_name']
-del rawPlayByPlay['qb_hit_2_player_id']
-del rawPlayByPlay['qb_hit_1_player_id']
-del rawPlayByPlay['qb_hit_1_player_name']
-del rawPlayByPlay['tackle_for_loss_2_player_name']
-del rawPlayByPlay['tackle_for_loss_2_player_id']
-del rawPlayByPlay['tackle_for_loss_1_player_id']
-del rawPlayByPlay['tackle_for_loss_1_player_name']
-del rawPlayByPlay['penalty_player_name']
-del rawPlayByPlay['penalty_player_id']
-del rawPlayByPlay['blocked_player_id']
-del rawPlayByPlay['blocked_player_name']
-del rawPlayByPlay['own_kickoff_recovery_player_id']
-del rawPlayByPlay['own_kickoff_recovery_player_name']
-del rawPlayByPlay['own_kickoff_recovery_td']
-del rawPlayByPlay['kicker_player_name']
-del rawPlayByPlay['kicker_player_id']
-del rawPlayByPlay['punter_player_name']
-del rawPlayByPlay['punter_player_id']
-del rawPlayByPlay['lateral_kickoff_returner_player_id']
-del rawPlayByPlay['lateral_kickoff_returner_player_name']
-del rawPlayByPlay['kickoff_returner_player_id']
-del rawPlayByPlay['kickoff_returner_player_name']
-del rawPlayByPlay['lateral_punt_returner_player_id']
-del rawPlayByPlay['lateral_punt_returner_player_name']
-del rawPlayByPlay['punt_returner_player_id']
-del rawPlayByPlay['punt_returner_player_name']
-del rawPlayByPlay['lateral_interception_player_id']
-del rawPlayByPlay['lateral_interception_player_name']
-del rawPlayByPlay['interception_player_id']
-del rawPlayByPlay['interception_player_name']
-del rawPlayByPlay['lateral_sack_player_id']
-del rawPlayByPlay['lateral_sack_player_name']
-del rawPlayByPlay['lateral_rusher_player_name']
-del rawPlayByPlay['lateral_rusher_player_id']
-del rawPlayByPlay['rusher_player_name']
-del rawPlayByPlay['rusher_player_id']
-del rawPlayByPlay['lateral_receiver_player_id']
-del rawPlayByPlay['lateral_receiver_player_name']
-del rawPlayByPlay['passer_player_id']
-del rawPlayByPlay['passer_player_name']
-del rawPlayByPlay['receiver_player_id']
-del rawPlayByPlay['receiver_player_name']
-del rawPlayByPlay['total_away_raw_yac_wpa']
-del rawPlayByPlay['total_home_raw_yac_wpa']
-del rawPlayByPlay['total_away_raw_air_wpa']
-del rawPlayByPlay['total_home_comp_air_wpa']
-del rawPlayByPlay['total_away_comp_air_epa']
-del rawPlayByPlay['total_away_comp_air_wpa']
-del rawPlayByPlay['total_away_comp_yac_epa']
-del rawPlayByPlay['total_away_comp_yac_wpa']
-del rawPlayByPlay['total_home_epa']
-del rawPlayByPlay['total_away_pass_epa']
-del rawPlayByPlay['total_away_pass_wpa']
-del rawPlayByPlay['total_away_raw_air_epa']
-del rawPlayByPlay['total_away_raw_yac_epa']
-del rawPlayByPlay['total_away_epa']
-del rawPlayByPlay['total_away_rush_epa']
-del rawPlayByPlay['total_away_rush_wpa']
-del rawPlayByPlay['total_home_comp_air_epa']
-del rawPlayByPlay['total_home_comp_yac_epa']
-del rawPlayByPlay['total_home_rush_wpa']
-del rawPlayByPlay['total_home_pass_epa']
-del rawPlayByPlay['total_home_pass_wpa']
-del rawPlayByPlay['total_home_comp_yac_wpa']
-del rawPlayByPlay['total_home_raw_air_epa']
-del rawPlayByPlay['total_home_raw_yac_epa']
-del rawPlayByPlay['total_home_rush_epa']
-del rawPlayByPlay['comp_yac_wpa']
-del rawPlayByPlay['comp_yac_epa']
-del rawPlayByPlay['comp_air_epa']
-del rawPlayByPlay['comp_air_wpa']
-del rawPlayByPlay['no_score_prob']
-del rawPlayByPlay['opp_fg_prob']
-del rawPlayByPlay['opp_safety_prob']
-del rawPlayByPlay['opp_td_prob']
-del rawPlayByPlay['air_epa']
-del rawPlayByPlay['yac_epa']
-del rawPlayByPlay['air_wpa']
-del rawPlayByPlay['epa']
-del rawPlayByPlay['ep']
-del rawPlayByPlay['wp']
-del rawPlayByPlay['wpa']
-del rawPlayByPlay['fg_prob']
-del rawPlayByPlay['safety_prob']
-del rawPlayByPlay['td_prob']
-del rawPlayByPlay['extra_point_prob']
-del rawPlayByPlay['two_point_conversion_prob']
-del rawPlayByPlay['def_wp']
-del rawPlayByPlay['home_wp']
-del rawPlayByPlay['away_wp']
-del rawPlayByPlay['home_wp_post']
-del rawPlayByPlay['yac_wpa']
-del rawPlayByPlay['away_wp_post']
-del rawPlayByPlay['kick_distance']
-del rawPlayByPlay['kickoff_inside_twenty']
-del rawPlayByPlay['kickoff_attempt']
-del rawPlayByPlay['kickoff_downed']
-del rawPlayByPlay['kickoff_in_endzone']
-del rawPlayByPlay['kickoff_fair_catch']
-del rawPlayByPlay['kickoff_out_of_bounds']
-del rawPlayByPlay['own_kickoff_recovery']
-del rawPlayByPlay['punt_attempt']
-del rawPlayByPlay['punt_inside_twenty']
-del rawPlayByPlay['punt_downed']
-del rawPlayByPlay['punt_in_endzone']
-del rawPlayByPlay['punt_out_of_bounds']
-del rawPlayByPlay['first_down_pass']
-del rawPlayByPlay['first_down_penalty']
-del rawPlayByPlay['first_down_rush']
-del rawPlayByPlay['field_goal_result']
-del rawPlayByPlay['third_down_failed']
-del rawPlayByPlay['fourth_down_converted']
-del rawPlayByPlay['fourth_down_failed']
-del rawPlayByPlay['home_timeouts_remaining']
-del rawPlayByPlay['away_timeouts_remaining']
-del rawPlayByPlay['solo_tackle']
-del rawPlayByPlay['posteam_timeouts_remaining']
-del rawPlayByPlay['defteam_timeouts_remaining']
-del rawPlayByPlay['return_team']
-del rawPlayByPlay['return_yards']
-del rawPlayByPlay['return_touchdown']
-#del rawPlayByPlay['air_yards']
-#del rawPlayByPlay['yards_after_catch']
-del rawPlayByPlay['punt_fair_catch']
-del rawPlayByPlay['home_team']
-del rawPlayByPlay['away_team']
-del rawPlayByPlay['side_of_field']
-del rawPlayByPlay['quarter_seconds_remaining']
-del rawPlayByPlay['goal_to_go']
-del rawPlayByPlay['quarter_end']
-del rawPlayByPlay['time']
-del rawPlayByPlay['total_home_score']
-del rawPlayByPlay['total_away_score']
-del rawPlayByPlay['posteam_score']
-del rawPlayByPlay['defteam_score']
-del rawPlayByPlay['posteam_score_post']
-del rawPlayByPlay['defteam_score_post']
-del rawPlayByPlay['assist_tackle']
-del rawPlayByPlay['replay_or_challenge']
-del rawPlayByPlay['replay_or_challenge_result']
-del rawPlayByPlay['defensive_extra_point_attempt']
-del rawPlayByPlay['defensive_extra_point_conv']
-del rawPlayByPlay['lateral_recovery']
-del rawPlayByPlay['lateral_reception']
-del rawPlayByPlay['lateral_rush']
-del rawPlayByPlay['lateral_return']
-del rawPlayByPlay['timeout_team']
-del rawPlayByPlay['td_team']
-#del rawPlayByPlay['yrdln']
-#del rawPlayByPlay['half_seconds_remaining']
-del rawPlayByPlay['total_home_raw_air_wpa']
-del rawPlayByPlay['touchback']
+######
 
+# Drop any columns/features that are team or player specific
+raw_play_by_play.drop(['fumble_recovery_1_player_id', 'fumble_recovery_1_team', 'fumble_recovery_1_yards', 'fumble_recovery_1_player_name', 'fumble_recovery_2_player_id', 'fumble_recovery_2_player_name', 
+                    'fumble_recovery_2_team', 'fumble_recovery_2_yards', 'fumbled_1_team', 'fumbled_1_player_name', 'fumbled_1_player_id', 'fumbled_2_player_id', 'fumbled_2_player_name', 'fumbled_2_team', 
+                    'pass_defense_1_player_id', 'pass_defense_1_player_name', 'pass_defense_2_player_id', 'pass_defense_2_player_name', 'assist_tackle_4_player_id', 'assist_tackle_4_player_name', 
+                    'assist_tackle_4_team', 'assist_tackle_3_team', 'assist_tackle_3_player_name', 'assist_tackle_3_player_id', 'assist_tackle_2_player_id', 'assist_tackle_2_player_name', 
+                    'assist_tackle_2_team', 'assist_tackle_1_player_id', 'assist_tackle_1_player_name', 'assist_tackle_1_team', 'solo_tackle_2_player_name', 'solo_tackle_1_player_name', 
+                    'solo_tackle_2_team', 'solo_tackle_1_team', 'solo_tackle_1_player_id', 'solo_tackle_2_player_id', 'forced_fumble_player_2_player_name', 'forced_fumble_player_2_player_id',
+                    'forced_fumble_player_2_team', 'forced_fumble_player_1_player_name', 'forced_fumble_player_1_player_id', 'forced_fumble_player_1_team', 'qb_hit_2_player_name', 'qb_hit_2_player_id',
+                    'qb_hit_1_player_id', 'qb_hit_1_player_name', 'tackle_for_loss_2_player_name', 'tackle_for_loss_2_player_id', 'tackle_for_loss_1_player_id', 'tackle_for_loss_1_player_name',
+                    'penalty_player_name', 'penalty_player_id', 'blocked_player_id', 'blocked_player_name', 'own_kickoff_recovery_player_id', 'own_kickoff_recovery_player_name', 'own_kickoff_recovery_td',
+                    'kicker_player_name', 'kicker_player_id', 'punter_player_name', 'punter_player_id', 'lateral_kickoff_returner_player_id', 'lateral_kickoff_returner_player_name', 'kickoff_returner_player_id',
+                    'kickoff_returner_player_name', 'lateral_punt_returner_player_id', 'lateral_punt_returner_player_name', 'punt_returner_player_id', 'punt_returner_player_name', 'lateral_interception_player_id',
+                    'lateral_interception_player_name', 'interception_player_id', 'interception_player_name', 'lateral_sack_player_id', 'lateral_sack_player_name', 'lateral_rusher_player_name', 'lateral_rusher_player_id',
+                    'rusher_player_name', 'rusher_player_id', 'lateral_receiver_player_id', 'lateral_receiver_player_name', 'passer_player_id', 'passer_player_name', 'receiver_player_id', 'receiver_player_name'
+                    ], axis = 1, inplace = True)
+
+
+# Drop any columns that provide wpa (win probability added) or epa (expected points added) features.
+raw_play_by_play.drop(['total_away_raw_yac_wpa', 'total_home_raw_yac_wpa', 'total_away_raw_air_wpa', 'total_home_comp_air_wpa', 'total_away_comp_air_epa', 'total_away_comp_air_wpa', 'total_away_comp_yac_epa', 
+                    'total_away_comp_yac_wpa', 'total_home_epa', 'total_away_pass_epa', 'total_away_pass_wpa', 'total_away_raw_air_epa', 'total_away_raw_yac_epa', 'total_away_epa', 'total_away_rush_epa', 
+                    'total_away_rush_wpa', 'total_home_comp_air_epa', 'total_home_comp_yac_epa', 'total_home_rush_wpa', 'total_home_pass_epa', 'total_home_pass_wpa', 'total_home_comp_yac_wpa', 
+                    'total_home_raw_air_epa', 'total_home_raw_yac_epa', 'total_home_rush_epa', 'comp_yac_wpa', 'comp_yac_epa', 'comp_air_epa', 'comp_air_wpa', 'no_score_prob', 'opp_fg_prob', 'opp_safety_prob', 
+                    'opp_td_prob', 'air_epa', 'yac_epa', 'air_wpa', 'epa', 'ep', 'wp', 'wpa', 'fg_prob', 'safety_prob', 'td_prob', 'extra_point_prob', 'two_point_conversion_prob', 'def_wp', 'home_wp', 'away_wp', 
+                    'home_wp_post', 'yac_wpa', 'away_wp_post', 'total_home_raw_air_wpa'], axis = 1, inplace = True)
+
+
+# Drop any columns pertaining to kickoffs and punts
+raw_play_by_play.drop(['kick_distance', 'kickoff_inside_twenty', 'kickoff_attempt', 'kickoff_downed', 'kickoff_in_endzone', 'kickoff_fair_catch', 'kickoff_out_of_bounds', 
+                    'own_kickoff_recovery', 'punt_attempt', 'punt_inside_twenty', 'punt_downed', 'punt_in_endzone', 'punt_out_of_bounds', 'punt_fair_catch', 'return_team', 
+                    'return_yards', 'return_touchdown'], axis = 1, inplace = True)
+
+
+# Drop variables for columns that are related to specific actions like penalties, challenges, first/4th downs
+raw_play_by_play.drop(['first_down_pass', 'first_down_penalty', 'first_down_rush', 'field_goal_result', 'third_down_failed', 'fourth_down_converted', 'fourth_down_failed', 
+                    'solo_tackle', 'replay_or_challenge', 'replay_or_challenge_result', 'defensive_extra_point_attempt', 'defensive_extra_point_conv', 'lateral_recovery', 'lateral_reception', 'lateral_rush', 
+                    'lateral_return', 'timeout_team', 'td_team', 'assist_tackle', 'touchback', 'penalty_type', 'extra_point_result', 'two_point_conv_result',
+                    'defensive_two_point_attempt'], axis = 1, inplace = True)
+
+
+# Drop some game-situation specific columns
+raw_play_by_play.drop(['home_timeouts_remaining', 'away_timeouts_remaining', 'posteam_timeouts_remaining', 'defteam_timeouts_remaining', 'total_home_score', 'total_away_score', 'posteam_score', 
+                    'defteam_score', 'posteam_score_post', 'defteam_score_post', 'yrdln', 'half_seconds_remaining', 'quarter_end', 'time', 'goal_to_go', 
+                    'quarter_seconds_remaining', 'side_of_field', 'away_team', 'home_team'], axis = 1, inplace = True)
 
 
 # Remove any duplicate rows
-rawPlayByPlay.drop_duplicates(keep='first', inplace=True)
+raw_play_by_play.drop_duplicates(keep='first', inplace=True)
 
-# %% Clean values within columns
+
+# %% 
+#######################################################
+## Merge Weather, Madden, and Betting Data
+#######################################################
+
+# Clean weather and aggregate weather data to merge to play-by-play data
+nfl_weather = nfl_weather.groupby(['game_id']).agg({'Rain': np.min, 'Snow': np.min, 'Wind':np.min, 'Fog':np.min,
+                                                    'Dome':np.mean, 'Time':np.min})
+raw_play_by_play = pd.merge(raw_play_by_play, nfl_weather, how='inner', on=['game_id'])
+
+# Merge Madden data
+
+# Merge betting and probability data
+
+# %% 
+#######################################################
+## Clean values within columns
+#######################################################
 
 # Replace any null/None/NaN values
-rawPlayByPlay['desc'].fillna('Other' , inplace=True)
-rawPlayByPlay['play_type'].fillna('Other' , inplace=True)
-rawPlayByPlay['down'].fillna(0, inplace=True)
-rawPlayByPlay['yards_gained'].fillna(0, inplace=True)
-rawPlayByPlay['penalty_yards'].fillna(0, inplace=True)
-rawPlayByPlay['game_seconds_remaining'].fillna(-1, inplace=True)
-rawPlayByPlay['two_point_attempt'].fillna(0, inplace=True)
-rawPlayByPlay['defensive_two_point_conv'].fillna(0, inplace=True)
-rawPlayByPlay['score_differential'].fillna(0, inplace=True)
-rawPlayByPlay['score_differential_post'].fillna(0, inplace=True)
-rawPlayByPlay['incomplete_pass'].fillna(0, inplace=True)
-rawPlayByPlay['timeout'].fillna(0, inplace=True)
-rawPlayByPlay['yards_after_catch'].fillna(0, inplace=True)
-rawPlayByPlay['air_yards'].fillna(0, inplace=True)
+raw_play_by_play['desc'].fillna('Other' , inplace=True)
+raw_play_by_play['play_type'].fillna('Other' , inplace=True)
+raw_play_by_play['down'].fillna(0, inplace=True)
+raw_play_by_play['yards_gained'].fillna(0, inplace=True)
+raw_play_by_play['penalty_yards'].fillna(0, inplace=True)
+raw_play_by_play['game_seconds_remaining'].fillna(-1, inplace=True)
+raw_play_by_play['two_point_attempt'].fillna(0, inplace=True)
+raw_play_by_play['defensive_two_point_conv'].fillna(0, inplace=True)
+raw_play_by_play['score_differential'].fillna(0, inplace=True)
+raw_play_by_play['score_differential_post'].fillna(0, inplace=True)
+raw_play_by_play['incomplete_pass'].fillna(0, inplace=True)
+raw_play_by_play['timeout'].fillna(0, inplace=True)
+raw_play_by_play['yards_after_catch'].fillna(0, inplace=True)
+raw_play_by_play['air_yards'].fillna(0, inplace=True)
 
 # Set description strings to lowercase
-rawPlayByPlay['desc'] = rawPlayByPlay['desc'].str.lower()
+raw_play_by_play['desc'] = raw_play_by_play['desc'].str.lower()
 
+# Calculate/determine if a play resulted in points and fixes errors within data (defensive 2 point scores)
+raw_play_by_play['points_earned'] = raw_play_by_play['score_differential_post'] - raw_play_by_play['score_differential']
+raw_play_by_play['points_earned'] = np.where(raw_play_by_play['defensive_two_point_conv'] == 1, -2, raw_play_by_play['points_earned'])
+raw_play_by_play['points_earned'].fillna(0, inplace=True)
+del raw_play_by_play['score_differential_post']
 
-# %%
+raw_play_by_play['play_type'] = np.where(raw_play_by_play['two_point_attempt'] == 1, "2pt Attempt", raw_play_by_play['play_type'])
+raw_play_by_play['points_earned'] = np.where(raw_play_by_play['incomplete_pass'] == 1, 0, raw_play_by_play['points_earned'])
 
-# Calculate/determine if a play resulted in points
-# Fixes errors within data (defensive 2 point scores)
-rawPlayByPlay['points_earned'] = rawPlayByPlay['score_differential_post'] - rawPlayByPlay['score_differential']
-rawPlayByPlay['points_earned'] = np.where(rawPlayByPlay['defensive_two_point_conv'] == 1, -2, rawPlayByPlay['points_earned'])
-rawPlayByPlay['points_earned'].fillna(0, inplace=True)
+# Convert dates to usable months and year attributes
+raw_play_by_play['GameMonth'] = pd.DatetimeIndex(raw_play_by_play['game_date']).month
+raw_play_by_play['GameYear'] = pd.DatetimeIndex(raw_play_by_play['game_date']).year
+del raw_play_by_play['game_date']
 
-del rawPlayByPlay['score_differential_post']
-
-rawPlayByPlay['play_type'] = np.where(rawPlayByPlay['two_point_attempt'] == 1, "2pt Attempt", rawPlayByPlay['play_type'])
-rawPlayByPlay['points_earned'] = np.where(rawPlayByPlay['incomplete_pass'] == 1, 0, rawPlayByPlay['points_earned'])
-
-
-# %% Time Stoppages
+# %% 
+#######################################################
+## Time Stoppages and Non(important)-Plays
+#######################################################
 
 # Separate time stoppages (end of quarters, end of games, timeouts)
-timeouts = rawPlayByPlay[(rawPlayByPlay['timeout'] == 1) & (rawPlayByPlay['desc'].str.contains('timeout') & rawPlayByPlay['down'] == 0)]
+timeouts = raw_play_by_play[(raw_play_by_play['timeout'] == 1) & (raw_play_by_play['desc'].str.contains('timeout') & raw_play_by_play['down'] == 0)]
 timeouts = timeouts[['game_id','drive','play_id']]
 timeouts = timeouts.groupby(['game_id', 'drive']).agg(['count'])
 
-playStoppages = rawPlayByPlay[(rawPlayByPlay['desc'].str.contains('end of quarter')) | (rawPlayByPlay['desc'].str.contains('end quarter')) | (rawPlayByPlay['desc'].str.contains('two-minute warning'))]
+playStoppages = raw_play_by_play[(raw_play_by_play['desc'].str.contains('end of quarter')) | (raw_play_by_play['desc'].str.contains('end quarter')) | (raw_play_by_play['desc'].str.contains('two-minute warning'))]
 playStoppages = playStoppages[['game_id','drive','play_id']]
 playStoppages = playStoppages.groupby(['game_id', 'drive']).agg(['count'])
+endOfGames = raw_play_by_play[(raw_play_by_play['desc'].str.contains('end game')) | (raw_play_by_play['desc'].str.contains('end of game'))]
 
-endOfGames = rawPlayByPlay[(rawPlayByPlay['desc'].str.contains('end game')) | (rawPlayByPlay['desc'].str.contains('end of game'))]
-
-
-# %%
 # Additional Cleanup for offsetting penalties (no plays), substitutions, other non-play tuples
-misc = rawPlayByPlay[(rawPlayByPlay['play_type'] == "Other") & (rawPlayByPlay['game_seconds_remaining'] == -1)]
-offset = rawPlayByPlay[(rawPlayByPlay['desc'].str.contains('offsetting')) & (rawPlayByPlay['play_type'] == "Other")]
-misc2 = rawPlayByPlay[(rawPlayByPlay['play_type'] == "Other")]
+misc = raw_play_by_play[(raw_play_by_play['play_type'] == "Other") & (raw_play_by_play['game_seconds_remaining'] == -1)]
+offset = raw_play_by_play[(raw_play_by_play['desc'].str.contains('offsetting')) & (raw_play_by_play['play_type'] == "Other")]
+misc2 = raw_play_by_play[(raw_play_by_play['play_type'] == "Other")]
 misc = pd.concat([misc,misc2])
 del misc2
 
-# %%
 # Remove Timeouts and Play Stoppages (Non Penalties) from Play Set
-rawPlayByPlay = rawPlayByPlay[~((rawPlayByPlay['timeout'] == 1) & (rawPlayByPlay['play_type'] == "no_play") & (rawPlayByPlay['down'] == 0))]
-rawPlayByPlay = rawPlayByPlay[~((rawPlayByPlay['down'] == 0) & (rawPlayByPlay['desc'].str.contains('timeout')))]
-rawPlayByPlay = rawPlayByPlay[~rawPlayByPlay['desc'].str.contains('two-minute warning', na=False)]
-rawPlayByPlay = rawPlayByPlay[~((rawPlayByPlay['desc'].str.contains('end of quarter')) | (rawPlayByPlay['desc'].str.contains('end quarter'))| (rawPlayByPlay['desc'].str.contains('end of half')))]
-rawPlayByPlay = rawPlayByPlay[~((rawPlayByPlay['desc'].str.contains('end game')) | (rawPlayByPlay['desc'].str.contains('end of game')))]
-rawPlayByPlay = rawPlayByPlay[~((rawPlayByPlay['play_type'] == "Other") & (rawPlayByPlay['game_seconds_remaining'] == -1))]
-rawPlayByPlay = rawPlayByPlay[~((rawPlayByPlay['play_type'] == "Other") & (rawPlayByPlay['desc'].str.contains('offsetting')))]
-rawPlayByPlay = rawPlayByPlay[~(rawPlayByPlay['play_type'] == "Other")]
-rawPlayByPlay = rawPlayByPlay[~(rawPlayByPlay['play_type'] == "extra_point")]
-rawPlayByPlay = rawPlayByPlay[~(rawPlayByPlay['play_type'] == "2pt Attempt")]
+raw_play_by_play = raw_play_by_play[~((raw_play_by_play['timeout'] == 1) & (raw_play_by_play['play_type'] == "no_play") & (raw_play_by_play['down'] == 0))]
+raw_play_by_play = raw_play_by_play[~((raw_play_by_play['down'] == 0) & (raw_play_by_play['desc'].str.contains('timeout')))]
+raw_play_by_play = raw_play_by_play[~raw_play_by_play['desc'].str.contains('two-minute warning', na=False)]
+raw_play_by_play = raw_play_by_play[~((raw_play_by_play['desc'].str.contains('end of quarter')) | (raw_play_by_play['desc'].str.contains('end quarter'))| (raw_play_by_play['desc'].str.contains('end of half')))]
+raw_play_by_play = raw_play_by_play[~((raw_play_by_play['desc'].str.contains('end game')) | (raw_play_by_play['desc'].str.contains('end of game')))]
+raw_play_by_play = raw_play_by_play[~((raw_play_by_play['play_type'] == "Other") & (raw_play_by_play['game_seconds_remaining'] == -1))]
+raw_play_by_play = raw_play_by_play[~((raw_play_by_play['play_type'] == "Other") & (raw_play_by_play['desc'].str.contains('offsetting')))]
+raw_play_by_play = raw_play_by_play[~(raw_play_by_play['play_type'] == "Other")]
+raw_play_by_play = raw_play_by_play[~(raw_play_by_play['play_type'] == "extra_point")]
+raw_play_by_play = raw_play_by_play[~(raw_play_by_play['play_type'] == "2pt Attempt")]
 
-# %%
 # Remove Kickoffs, as they don't count as the first play of a drive and would affect
 # starting field position calculations
-rawPlayByPlay = rawPlayByPlay[~(rawPlayByPlay['play_type'] == "kickoff")]
+raw_play_by_play = raw_play_by_play[~(raw_play_by_play['play_type'] == "kickoff")]
+
+# Take out plays labeled qb_kneels that are at the begining of the drive (touchbacks)
+idx = raw_play_by_play.groupby(['game_id', 'drive', 'posteam'])['game_seconds_remaining'].idxmax()
+Touchbacks = raw_play_by_play.loc[idx]
+Touchbacks = Touchbacks[(Touchbacks['play_type'] == 'qb_kneel')]
+raw_play_by_play = raw_play_by_play[~raw_play_by_play.index.isin(Touchbacks.index)]
+
 
 # %%
-# Convert dates to usable months and year attributes
-rawPlayByPlay['GameMonth'] = pd.DatetimeIndex(rawPlayByPlay['game_date']).month
-rawPlayByPlay['GameYear'] = pd.DatetimeIndex(rawPlayByPlay['game_date']).year
-del rawPlayByPlay['game_date']
-
-# %%
-# Create new columns for analysis
-rawPlayByPlay['RunOver10'] = np.where((rawPlayByPlay['play_type'] == "run") & (rawPlayByPlay['yards_gained'] >= 10), 1, 0)
-rawPlayByPlay['PassOver20'] = np.where((rawPlayByPlay['play_type'] == "pass") & (rawPlayByPlay['yards_gained'] >= 20), 1, 0)
-rawPlayByPlay['penalty_yards'] = np.where((rawPlayByPlay['play_type'] == "pass") & (rawPlayByPlay['yards_gained'] >= 20), 1, 0)
-
-# Build tables to join back to Drive dataset later
-
-ThirdDown = rawPlayByPlay[rawPlayByPlay['down'] == 3]
+#######################################################
+## Build tables to join back to Drive dataset later
+#######################################################
+ThirdDown = raw_play_by_play[raw_play_by_play['down'] == 3]
 ThirdDown = ThirdDown[['game_id', 'drive', 'posteam', 'ydstogo','third_down_converted']]
 ThirdDown = ThirdDown.groupby(['game_id', 'drive', 'posteam']).agg({'ydstogo' : np.mean, 'third_down_converted' : np.sum})
 
-FirstDown = rawPlayByPlay[rawPlayByPlay['down'] == 1]
+FirstDown = raw_play_by_play[raw_play_by_play['down'] == 1]
 FirstDown = FirstDown[['game_id', 'drive', 'posteam', 'yards_gained']]
 FirstDown = FirstDown.groupby(['game_id', 'drive', 'posteam']).agg({'yards_gained' : np.mean})
 
-PenaltiesPos = rawPlayByPlay[((rawPlayByPlay['penalty'] == 1) & (rawPlayByPlay['posteam'] == rawPlayByPlay['penalty_team']))]
+PenaltiesPos = raw_play_by_play[((raw_play_by_play['penalty'] == 1) & (raw_play_by_play['posteam'] == raw_play_by_play['penalty_team']))]
 PenaltiesPos = PenaltiesPos[['game_id', 'drive', 'posteam', 'penalty', 'penalty_yards']]
 PenaltiesPos = PenaltiesPos.groupby(['game_id', 'drive', 'posteam']).agg({'penalty_yards' : np.sum, 'penalty' : np.sum})
 
-PenaltiesDef = rawPlayByPlay[((rawPlayByPlay['penalty'] == 1) & (rawPlayByPlay['posteam'] != rawPlayByPlay['penalty_team']))]
+PenaltiesDef = raw_play_by_play[((raw_play_by_play['penalty'] == 1) & (raw_play_by_play['posteam'] != raw_play_by_play['penalty_team']))]
 PenaltiesDef = PenaltiesDef[['game_id', 'drive', 'posteam', 'penalty', 'penalty_yards']]
 PenaltiesDef = PenaltiesDef.groupby(['game_id', 'drive', 'posteam']).agg({'penalty_yards' : np.sum, 'penalty' : np.sum})
 
-
-# %%
-# Take out plays labeled qb_kneels that are at the begining of the drive (touchbacks)
-idx = rawPlayByPlay.groupby(['game_id', 'drive', 'posteam'])['game_seconds_remaining'].idxmax()
-Touchbacks = rawPlayByPlay.loc[idx]
-Touchbacks = Touchbacks[(Touchbacks['play_type'] == 'qb_kneel')]
-
-rawPlayByPlay = rawPlayByPlay[~rawPlayByPlay.index.isin(Touchbacks.index)]
-
-
-# %%
-# Remove 'no play' plays that were needed in case they were penalties, but not for actual drives
-rawPlayByPlay = rawPlayByPlay[~(rawPlayByPlay['play_type'] == "no_play")]
+# Remove 'no play' plays that were needed in case they were penalties, but not for actual drives. Needed in case they're the first or last play of drives
+raw_play_by_play = raw_play_by_play[~(raw_play_by_play['play_type'] == "no_play")]
 
 # Take final plays 
-idx = rawPlayByPlay.groupby(['game_id', 'drive', 'posteam'])['game_seconds_remaining'].idxmin()
-FinalPlays = rawPlayByPlay.loc[idx]
+idx = raw_play_by_play.groupby(['game_id', 'drive', 'posteam'])['game_seconds_remaining'].idxmin()
+FinalPlays = raw_play_by_play.loc[idx]
 
 # Take out punts and field goals only if they're the last play in the drive
 PuntsAndFG = FinalPlays[((FinalPlays['play_type'] == 'field_goal') | (FinalPlays['play_type'] == 'punt'))]
@@ -389,27 +214,34 @@ FinalPlays['drive_outcome'] = np.where(((FinalPlays['drive_outcome'] == 'pass') 
 DriveOutcome = FinalPlays[['game_id', 'drive','posteam','drive_outcome']]
 
 # %%
+#######################################################
+## Create new features for analysis
+#######################################################
+
+# Explosive plays and penalties
+raw_play_by_play['RunOver10'] = np.where((raw_play_by_play['play_type'] == "run") & (raw_play_by_play['yards_gained'] >= 10), 1, 0)
+raw_play_by_play['PassOver20'] = np.where((raw_play_by_play['play_type'] == "pass") & (raw_play_by_play['yards_gained'] >= 20), 1, 0)
+raw_play_by_play['penalty_yards'] = np.where((raw_play_by_play['play_type'] == "pass") & (raw_play_by_play['yards_gained'] >= 20), 1, 0)
 
 # Create first play table to determine starting field position/yards to go
-idx = rawPlayByPlay.groupby(['game_id','drive', 'posteam'])['game_seconds_remaining'].idxmax()
-FirstPlays = rawPlayByPlay.loc[idx, ['game_id', 'drive', 'posteam', 'game_seconds_remaining', 'yardline_100']]
-rawPlayByPlay = pd.merge(rawPlayByPlay, FirstPlays, how='left', on=['game_id', 'drive', 'posteam'])
-rawPlayByPlay.rename(columns={'game_seconds_remaining_x':'game_seconds_remaining', 'game_seconds_remaining_y':'drive_starting_time', 'yardline_100_x':'yardline_100', 'yardline_100_y':'drive_starting_location'}, inplace=True)
-
+idx = raw_play_by_play.groupby(['game_id','drive', 'posteam'])['game_seconds_remaining'].idxmax()
+FirstPlays = raw_play_by_play.loc[idx, ['game_id', 'drive', 'posteam', 'game_seconds_remaining', 'yardline_100']]
+raw_play_by_play = pd.merge(raw_play_by_play, FirstPlays, how='left', on=['game_id', 'drive', 'posteam'])
+raw_play_by_play.rename(columns={'game_seconds_remaining_x':'game_seconds_remaining', 'game_seconds_remaining_y':'drive_starting_time', 'yardline_100_x':'yardline_100', 'yardline_100_y':'drive_starting_location'}, inplace=True)
 
 # Create last play table to determine time elapsed per drive
-l_idx = rawPlayByPlay.groupby(['game_id','drive', 'posteam'])['game_seconds_remaining'].idxmin()
-LastPlays = rawPlayByPlay.loc[l_idx, ['game_id', 'drive', 'posteam', 'game_seconds_remaining', 'yardline_100']]
-rawPlayByPlay = pd.merge(rawPlayByPlay, LastPlays, how='left', on=['game_id', 'drive', 'posteam'])
-rawPlayByPlay.rename(columns={'game_seconds_remaining_x':'game_seconds_remaining', 'game_seconds_remaining_y':'drive_end_time', 'yardline_100_x':'yardline_100', 'yardline_100_y':'drive_end_location'}, inplace = True)
+l_idx = raw_play_by_play.groupby(['game_id','drive', 'posteam'])['game_seconds_remaining'].idxmin()
+LastPlays = raw_play_by_play.loc[l_idx, ['game_id', 'drive', 'posteam', 'game_seconds_remaining', 'yardline_100']]
+raw_play_by_play = pd.merge(raw_play_by_play, LastPlays, how='left', on=['game_id', 'drive', 'posteam'])
+raw_play_by_play.rename(columns={'game_seconds_remaining_x':'game_seconds_remaining', 'game_seconds_remaining_y':'drive_end_time', 'yardline_100_x':'yardline_100', 'yardline_100_y':'drive_end_location'}, inplace = True)
 
 
 # %%
+#######################################################
+## This outputs play by play outcomes for use in creating historical features
+#######################################################
 
-#########
-#This outputs play by play outcomes for use in creating historical features
-#########
-prior_play_by_play = rawPlayByPlay[['play_id','game_id', 'posteam', 'defteam', 'drive', 'sp', 'qtr', 'down', 'ydstogo', 'ydsnet','game_seconds_remaining', 'play_type', 'yards_gained', 'punt_blocked', 'interception', 'fumble_lost', 'points_earned']]
+prior_play_by_play = raw_play_by_play[['play_id','game_id', 'posteam', 'defteam', 'drive', 'sp', 'qtr', 'down', 'ydstogo', 'ydsnet','game_seconds_remaining', 'play_type', 'yards_gained', 'punt_blocked', 'interception', 'fumble_lost', 'points_earned']]
 last_play_idx = prior_play_by_play.groupby(['game_id', 'drive', 'posteam'])['game_seconds_remaining'].idxmin()
 last_plays = prior_play_by_play.loc[last_play_idx]
 
@@ -427,29 +259,49 @@ last_plays['drive_outcome'] = np.where(last_plays['drive_outcome'] == '0', 'end_
 last_plays = last_plays[['game_id','posteam','drive','drive_outcome']]
 
 
-# %%
-# Removes punts and field goals from drives for 'clean' play-by-play
-
-rawPlayByPlay = rawPlayByPlay[~rawPlayByPlay.index.isin(PuntsAndFG.index)]
+# Finally, removes punts and field goals from drives for 'clean' play-by-play
+raw_play_by_play = raw_play_by_play[~raw_play_by_play.index.isin(PuntsAndFG.index)]
 
 # %%
+#######################################################
+## Last features for analysis
+#######################################################
+
+'''
+For some reason moving these to the first create features cell leads to some weird issues during model training, so we keep this here
+'''
+
 # YPA for Rushes and Passes
-Passes = rawPlayByPlay[(rawPlayByPlay['play_type']== "pass")].groupby(['game_id', 'drive', 'posteam']).agg({'yards_gained': np.sum})
+Passes = raw_play_by_play[(raw_play_by_play['play_type']== "pass")].groupby(['game_id', 'drive', 'posteam']).agg({'yards_gained': np.sum})
 Passes.rename({'yards_gained': 'PassYardage'}, axis=1, inplace=True)
 
-Runs = rawPlayByPlay[(rawPlayByPlay['play_type']== "run")].groupby(['game_id', 'drive', 'posteam']).agg({'yards_gained': np.sum})
+Runs = raw_play_by_play[(raw_play_by_play['play_type']== "run")].groupby(['game_id', 'drive', 'posteam']).agg({'yards_gained': np.sum})
 Runs.rename({'yards_gained': 'RunYardage'}, axis=1, inplace=True)
 
-DrivePlays = rawPlayByPlay[['game_id', 'drive','posteam','play_id']].groupby(['game_id', 'drive', 'posteam']).count()
+DrivePlays = raw_play_by_play[['game_id', 'drive','posteam','play_id']].groupby(['game_id', 'drive', 'posteam']).count()
 DrivePlays.rename({'play_id': 'Count'}, axis=1, inplace=True)
 
-del rawPlayByPlay['desc']
 
 # %%
-#########
-#This outputs final play by play data for analysis
-#########
-rawPlayByPlay.to_csv('../../data/clean/plays.csv', index = False)
+#######################################################
+## Remove features used above but not necessary for model training
+#######################################################
+
+del raw_play_by_play['penalty_team']
+del raw_play_by_play['penalty_yards']
+del raw_play_by_play['desc']
+del raw_play_by_play['defensive_two_point_conv']
+del raw_play_by_play['timeout']
+del raw_play_by_play['third_down_converted']
+del raw_play_by_play['punt_blocked']
+
+
+# %%
+#######################################################
+## Outputs data for next stage/script
+#######################################################
+
+raw_play_by_play.to_csv('../../data/clean/plays.csv', index = False)
 last_plays.to_csv('../../data/clean/last_plays.csv', index = False)
 FG.to_csv('../../data/clean/FG.csv', index = False)
 PenaltiesDef.to_csv('../../data/clean/PenaltiesDef.csv')
