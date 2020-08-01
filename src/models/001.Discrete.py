@@ -19,7 +19,7 @@ import time
 
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.externals import joblib
+#from sklearn.externals import joblib
 from sklearn.feature_selection import RFE, VarianceThreshold, SelectFromModel
 from sklearn.feature_selection import SelectKBest, mutual_info_regression, mutual_info_classif, chi2
 from sklearn import metrics
@@ -29,6 +29,13 @@ from sklearn.preprocessing import KBinsDiscretizer, scale
 import xgboost as xgb
 from catboost import CatBoostClassifier, cv, Pool
 
+import mlflow
+import mlflow.xgboost
+from mlflow import log_metric, log_param, log_artifacts
+mlflow.xgboost.autolog()
+mlflow.log_metric("accuracy", 0.7)
+
+mlflow ui
 
 
 plays = pd.read_csv("../../data/clean/plays.csv", low_memory = False)
@@ -122,7 +129,7 @@ del plays['target']
 
 data_np = plays.copy()
 #del data_np['index']
-data_np=pd.DataFrame(scale(data_np), columns = data_np.columns)
+#data_np=pd.DataFrame(scale(data_np), columns = data_np.columns)
 
 # Split samples before normalizing data
 
@@ -137,7 +144,7 @@ clf = DecisionTreeClassifier(criterion='entropy', splitter='best', max_depth=Non
 clf.fit(data_train, target_train)
 print('Decision Tree Acc:', clf.score(data_test, target_test))
 
-
+'''
 rf = RandomForestClassifier(n_estimators = 1000, max_depth = 10, min_samples_split = 25)
 rf.fit(data_train, target_train)
 rfpredictions = rf.predict(data_test)
@@ -150,7 +157,7 @@ rfconfusionMatrix = confusion_matrix(target_test, rfpredictions)
 
 print(classification_report(target_test, rfpredictions))
 print(rf.feature_importances_)
-
+'''
 
 
 # Catboost
@@ -163,10 +170,23 @@ print('CatBoost Test Acc:', scores_ACC)
 print(classification_report(target_test, test_predictions))       
 
 # XGBoost
-clf=xgb.XGBClassifier()
+clf=xgb.XGBClassifier(eta = 0.1, max_depth = 10)
 clf.fit(data_np, target_np)
 test_predictions = clf.predict(data_test)
 scores_ACC = clf.score(data_test, target_test)
 print("XGBoost Train Accuracy:",clf.score(data_np, target_np))
 print('XGBoost Test Acc:', scores_ACC)
 print(classification_report(target_test, test_predictions))
+
+feature_importances = pd.DataFrame(clf.feature_importances_, index=data_np.columns.tolist(), columns=['importance'])
+a = feature_importances.sort_values('importance', ascending=False)
+
+from matplotlib import pyplot
+from xgboost import plot_importance
+
+pyplot.bar(range(len(clf.feature_importances_)), clf.feature_importances_)
+pyplot.show()
+
+plot_importance(plot_importance(model)
+pyplot.show(), top_n = 10)
+pyplot.show()

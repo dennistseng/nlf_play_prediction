@@ -1,4 +1,12 @@
-# Create Drives
+"""
+Drives Feature Module for NFL Play Prediction Project
+@author: Dennis Tseng
+
+Part of the DSC 672 Capstone Final Project Class
+Group 3: Dennis Tseng, Scott Elmore, Dongmin Sun
+
+"""
+
 
 #import libraries
 import numpy as np

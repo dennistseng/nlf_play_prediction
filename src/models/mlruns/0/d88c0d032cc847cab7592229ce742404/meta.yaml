@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/halfc/nlf_play_prediction/src/models/mlruns/0/d88c0d032cc847cab7592229ce742404/artifacts
+end_time: 1596233794252
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+name: ''
+run_id: d88c0d032cc847cab7592229ce742404
+run_uuid: d88c0d032cc847cab7592229ce742404
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1596233434734
+status: 3
+tags: []
+user_id: halfc

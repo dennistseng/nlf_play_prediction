@@ -19,31 +19,16 @@ from sklearn.preprocessing import MinMaxScaler
 
 # Load Data
 data = pd.read_csv("../../data/clean/plays.csv", low_memory = False)
-del data['desc']
-del data['extra_point_result']
-del data['two_point_conv_result']
-del data['timeout']
-del data['penalty_team']
-del data['penalty_type']
-del data['penalty_yards']
-del data['defensive_two_point_attempt']
-del data['defensive_two_point_conv']
-del data['game_half']
-
-# Remove Probabilities
-del data['no_score_prob']
-del data['fg_prob']
-del data['safety_prob']
-del data['td_prob']
 
 # Remove in the interim
 del data['posteam']
 del data['defteam']
-
+del data['game_half']
 del data['pass_length']
 del data['pass_location']
 del data['run_gap']
 del data['run_location']
+del data['Time']
 
 # Dummy Data
 data['home'] = pd.get_dummies(data['posteam_type'], drop_first=True)
@@ -149,15 +134,18 @@ model2 = Sequential()
 model2.add(Masking(mask_value=0., input_shape=(25, 56)))
 model2.add(LSTM(128, activation='relu', return_sequences = True))
 model2.add(LSTM(64, activation='relu', return_sequences = True))
+model2.add(LSTM(64, activation='relu', return_sequences = True))
+model2.add(LSTM(32, activation='relu', return_sequences = True))
 model2.add(TimeDistributed(Dense(6, activation = 'softmax')))
 model2.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics = ['accuracy']) 
 model2.summary()
 
 model2.fit(padded_inputs, padded_outputs, epochs=10, verbose=1)
 
-
+'''
 # plot history
 pyplot.plot(model.history['loss'], label='train')
 pyplot.plot(model.history['val_loss'], label='test')
 pyplot.legend()
 pyplot.show()
+'''

@@ -19,6 +19,8 @@ import pandas as pd
 # Load datasets
 raw_play_by_play = pd.read_csv("../../data/raw/ConsolidateOutput.csv", low_memory = False)
 nfl_weather = pd.read_csv("../../data/raw/Weather_NFL.csv", low_memory = False)
+madden = pd.read_csv("../../data/raw/madden.csv", low_memory = False)
+wpa_data = pd.read_csv("../../data/raw/adjWP_PTpace.csv", low_memory = False)
 
 ######
 # Remove any colums deemed unecessary for both pre-processing and analysis 
@@ -41,12 +43,12 @@ raw_play_by_play.drop(['fumble_recovery_1_player_id', 'fumble_recovery_1_team', 
                     ], axis = 1, inplace = True)
 
 
-# Drop any columns that provide wpa (win probability added) or epa (expected points added) features.
+# Drop any columns that provide wpa (win probability added) or epa (expected points added) features that are too exotic. Regular EP and EPA are retained.
 raw_play_by_play.drop(['total_away_raw_yac_wpa', 'total_home_raw_yac_wpa', 'total_away_raw_air_wpa', 'total_home_comp_air_wpa', 'total_away_comp_air_epa', 'total_away_comp_air_wpa', 'total_away_comp_yac_epa', 
                     'total_away_comp_yac_wpa', 'total_home_epa', 'total_away_pass_epa', 'total_away_pass_wpa', 'total_away_raw_air_epa', 'total_away_raw_yac_epa', 'total_away_epa', 'total_away_rush_epa', 
                     'total_away_rush_wpa', 'total_home_comp_air_epa', 'total_home_comp_yac_epa', 'total_home_rush_wpa', 'total_home_pass_epa', 'total_home_pass_wpa', 'total_home_comp_yac_wpa', 
                     'total_home_raw_air_epa', 'total_home_raw_yac_epa', 'total_home_rush_epa', 'comp_yac_wpa', 'comp_yac_epa', 'comp_air_epa', 'comp_air_wpa', 'no_score_prob', 'opp_fg_prob', 'opp_safety_prob', 
-                    'opp_td_prob', 'air_epa', 'yac_epa', 'air_wpa', 'epa', 'ep', 'wp', 'wpa', 'fg_prob', 'safety_prob', 'td_prob', 'extra_point_prob', 'two_point_conversion_prob', 'def_wp', 'home_wp', 'away_wp', 
+                    'opp_td_prob', 'air_epa', 'yac_epa', 'air_wpa', 'wp', 'wpa', 'fg_prob', 'safety_prob', 'td_prob', 'extra_point_prob', 'two_point_conversion_prob', 'def_wp', 'home_wp', 'away_wp', 
                     'home_wp_post', 'yac_wpa', 'away_wp_post', 'total_home_raw_air_wpa'], axis = 1, inplace = True)
 
 
@@ -75,7 +77,7 @@ raw_play_by_play.drop_duplicates(keep='first', inplace=True)
 
 # %% 
 #######################################################
-## Merge Weather, Madden, and Betting Data
+## Merge Weather, Madden, and Win Probability Data
 #######################################################
 
 # Clean weather and aggregate weather data to merge to play-by-play data
@@ -83,9 +85,39 @@ nfl_weather = nfl_weather.groupby(['game_id']).agg({'Rain': np.min, 'Snow': np.m
                                                     'Dome':np.mean, 'Time':np.min})
 raw_play_by_play = pd.merge(raw_play_by_play, nfl_weather, how='inner', on=['game_id'])
 
-# Merge Madden data
+
+# Madden
+# Replace old names with current names
+raw_play_by_play['posteam'].replace('STL', 'LA', inplace=True)
+raw_play_by_play['defteam'].replace('STL', 'LA', inplace=True)
+raw_play_by_play['posteam'].replace('SD', 'LAC', inplace=True)
+raw_play_by_play['defteam'].replace('SD', 'LAC', inplace=True)
+raw_play_by_play['posteam'].replace('JAC', 'JAX', inplace=True)
+raw_play_by_play['defteam'].replace('JAC', 'JAX', inplace=True)
+
+# Convert dates to usable months and year attributes
+raw_play_by_play['GameMonth'] = pd.DatetimeIndex(raw_play_by_play['game_date']).month
+raw_play_by_play['GameYear'] = pd.DatetimeIndex(raw_play_by_play['game_date']).year
+del raw_play_by_play['game_date']
+
+# Group Madden rows by team, year, and position and take averages
+madden = madden.groupby(['Team', 'Position', 'year']).agg({'Overall': np.mean}).reset_index().pivot_table(index = ['year', 'Team'], columns = 'Position', values = 'Overall').reset_index()
+madden['year'] = madden['year'] - 1
+del madden['FB']
+
+# Offensive team merge
+raw_play_by_play = pd.merge(raw_play_by_play, madden, how='left', left_on=['posteam', 'GameYear'], right_on = ['Team', 'year'], suffixes = '_x')
+raw_play_by_play.drop(['Team', 'SS', 'ROLB', 'RE', 'P', 'MLB', 'LOLB', 'LE', 'K', 'FS', 'CB', 'DT', 'year'], axis = 1, inplace = True)
+raw_play_by_play.rename(columns = {'C':'off_c', 'HB' : 'off_hb' , 'LG' : 'off_lg', 'LT' : 'off_lt', 'QB' : 'off_qb', 'RG':'off_rg', 'RT':'off_rt', 'TE':'off_te', 'WR': 'off_wr'}, inplace =True)
+
+# Defensive team merge
+raw_play_by_play = pd.merge(raw_play_by_play, madden, how='left', left_on=['defteam', 'GameYear'], right_on = ['Team', 'year'], suffixes = '_y')
+# Drop some game-situation specific columns
+raw_play_by_play.drop(['Team', 'WR', 'TE', 'RT', 'RG', 'QB', 'P', 'LT', 'LG', 'K', 'HB', 'C', 'year'], axis = 1, inplace = True)
+raw_play_by_play.rename(columns = {'CB':'def_cb', 'DT':'def_dt', 'FS' : 'def_fs', 'LE':'def_le', 'LOLB':'def_lolb', 'MLB': 'def_mlb', 'RE':'def_re', 'ROLB':'def_rolb', 'SS':'def_ss'}, inplace = True)
 
 # Merge betting and probability data
+raw_play_by_play = pd.merge(raw_play_by_play, wpa_data, how='inner', on=['game_id', 'play_id'])
 
 # %% 
 #######################################################
@@ -120,10 +152,6 @@ del raw_play_by_play['score_differential_post']
 raw_play_by_play['play_type'] = np.where(raw_play_by_play['two_point_attempt'] == 1, "2pt Attempt", raw_play_by_play['play_type'])
 raw_play_by_play['points_earned'] = np.where(raw_play_by_play['incomplete_pass'] == 1, 0, raw_play_by_play['points_earned'])
 
-# Convert dates to usable months and year attributes
-raw_play_by_play['GameMonth'] = pd.DatetimeIndex(raw_play_by_play['game_date']).month
-raw_play_by_play['GameYear'] = pd.DatetimeIndex(raw_play_by_play['game_date']).year
-del raw_play_by_play['game_date']
 
 # %% 
 #######################################################
@@ -217,6 +245,11 @@ DriveOutcome = FinalPlays[['game_id', 'drive','posteam','drive_outcome']]
 #######################################################
 ## Create new features for analysis
 #######################################################
+
+# Create features for play-end resulting yardage
+raw_play_by_play['play_end_first_down_ydstogo'] = raw_play_by_play['ydstogo'] - raw_play_by_play['ydsnet']
+raw_play_by_play['play_end_total_ydstogo'] = raw_play_by_play['yardline_100'] - raw_play_by_play['ydsnet']
+
 
 # Explosive plays and penalties
 raw_play_by_play['RunOver10'] = np.where((raw_play_by_play['play_type'] == "run") & (raw_play_by_play['yards_gained'] >= 10), 1, 0)
