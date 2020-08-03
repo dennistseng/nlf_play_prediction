@@ -31,7 +31,7 @@ del plays['drive_outcome']
 plays = pd.merge(plays, drives, how='inner', on=['game_id', 'drive', 'posteam'])
 
 # Drop for plays that aren't relative in a plays persepective
-plays.drop(['drive_starting_time', 'drive_starting_location', 'drive_end_time', 'drive_end_location'])
+plays.drop(['drive_starting_time', 'drive_starting_location', 'drive_end_time', 'drive_end_location'], axis = 1, inplace = True)
 
 
 # Merge prior drive information
@@ -94,4 +94,5 @@ drives.columns[drives.isna().any()].tolist()
 del plays['game-drive']
 
 # Double Check Output
+
 plays.to_csv('../../data/clean/model_plays.csv', index = False)

@@ -1,0 +1,6 @@
+{'xg_classifier__n_estimators': 50}
+0.7568115301487801
+{'xg_classifier__n_estimators': 50}
+0.7575401992282134
+{'xg_classifier__booster': 'dart', 'xg_classifier__max_depth': 3, 'xg_classifier__n_estimators': 100}
+0.7404610065946987
