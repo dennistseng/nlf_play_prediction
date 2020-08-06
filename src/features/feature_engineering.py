@@ -120,7 +120,7 @@ if param_tuning == 1:
                'bootstrap': [True, False]}
     
     rf = RandomForestClassifier()
-    rf_random = RandomizedSearchCV(estimator = rf, param_distributions = rf_grid, n_iter = 100, scoring= 'roc_auc', cv = 3, verbose=10, n_jobs = 4)
+    rf_random = RandomizedSearchCV(estimator = rf, param_distributions = rf_grid, n_iter = 1000, scoring= 'roc_auc', cv = 5, verbose=10, n_jobs = -1)
     
     # Fit the random search model
     rf_random.fit(data_np, target_train)
@@ -192,7 +192,7 @@ if feat_select==1:
                              min_samples_split=20, 
                              min_samples_leaf = 8, 
                              max_features = 'auto',                                 
-                             class_weight= None,
+                             class_weight=  None,
                              bootstrap= True,
                              random_state=rand_st)
         sel = SelectFromModel(clf, prefit=False, threshold='mean', max_features=None)                                                           #to select only based on max_features, set to integer value and set threshold=-np.inf
@@ -204,7 +204,7 @@ if feat_select==1:
     if fs_type==3:                                                                ######Only work if the Target is binned###########
         #Univariate Feature Selection - Chi-squared
         sel=SelectKBest(chi2, k=k_cnt)
-        fit_mod=sel.fit(data_np, target_np)                                         #will throw error if any negative values in features, so turn off feature normalization, or switch to mutual_info_classif
+        fit_mod=sel.fit(data_np, target_train)                                         #will throw error if any negative values in features, so turn off feature normalization, or switch to mutual_info_classif
         print ('Univariate Feature Selection - Chi2: ')
         sel_idx=fit_mod.get_support()
 

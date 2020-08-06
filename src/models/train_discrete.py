@@ -71,7 +71,7 @@ import shap
 import lime
 
 # ML Flow
-import mlflow.sklearn
+#import mlflow.sklearn
 
 
 #Handle annoying warnings
@@ -92,10 +92,10 @@ norm_features=1                                     #Normalize features switch
 pca = 0
 feat_select=0                                       #Control Switch for Feature Selection
 fs_type=2                                           #Feature Selection type (1=Stepwise Backwards Removal, 2=Wrapper Select, 3=Univariate Selection)
-lv_filter=1                                         #Control switch for low variance filter on features
+lv_filter=0                                         #Control switch for low variance filter on features
 k_cnt= 20                                           #Number of 'Top k' best ranked features to select, only applies for fs_types 1 and 3
 param_tuning = 1                                    #Turn on model parameter tuning
-exhaustive_search = 1                               #Turn on if you want exhaustive grid search. Otherwise, it will default to RandomizedSearchCV
+exhaustive_search = 0                               #Turn on if you want exhaustive grid search. Otherwise, it will default to RandomizedSearchCV
 
 #Set global model parameters
 rand_st=0                                           #Set Random State variable for randomizing splits on runs
@@ -111,6 +111,10 @@ start_ts=time.time()
 
 data = pd.read_csv("../../data/clean/model_plays.csv", low_memory = False)
 data['target'].value_counts()
+
+# Remove labels
+del data['play_id']
+del data['game_id']
 
 
 # Test for run and pass predictors. Comment out if we don't want this
@@ -167,13 +171,13 @@ start_ts=time.time()
 #dt_pipe = []
 #rf_pipe = []
 #ab_pipe = []
-#gb_pipe = []
+gb_pipe = []
 #svm_pipe = []
 #mlp_pipe = []
-xg_pipe = []
+#xg_pipe = []
 
 #skpipes = [dt_pipe, rf_pipe, ab_pipe, gb_pipe, mlp_pipe, xg_pipe]
-skpipes = [xg_pipe]
+skpipes = [gb_pipe]
 
 # %%
 #############################################################################
@@ -303,14 +307,14 @@ classifiers = [#('knn_classifier', KNeighborsClassifier()),
                #('dt_classifier', DecisionTreeClassifier()), 
                #('rf_classifier', RandomForestClassifier()),
                #('ab_classifier', AdaBoostClassifier()),
-               #('gb_classifier', GradientBoostingClassifier()),
+               ('gb_classifier', GradientBoostingClassifier()),
                
                # Support Vector Machines
                #('sv_classifier', SVC()),
                
                # Neural Networks
                #('nn_classifier', MLPClassifier()),
-               ('xg_classifier', xgb.XGBClassifier(tree_method = 'gpu_hist'))
+               #('xg_classifier', xgb.XGBClassifier(tree_method = 'gpu_hist'))
                #('xg_classifier', xgb.XGBClassifier())
                ]
 
@@ -340,8 +344,8 @@ lr_pipe = Pipeline([('scaler', StandardScaler()),
 #dt_pipe = Pipeline(skpipes[0])
 #rf_pipe = Pipeline(skpipes[1])
 #ab_pipe = Pipeline(skpipes[2])
-#gb_pipe = Pipeline(skpipes[3])
-xg_pipe = Pipeline(skpipes[0])
+gb_pipe  = Pipeline(skpipes[0])
+#xg_pipe = Pipeline(skpipes[0])
 
 # SVMs
 #svm_pipe = Pipeline(skpipes[5])
@@ -354,7 +358,7 @@ xg_pipe = Pipeline(skpipes[0])
 
 # List of all classifier pipelines
 #pipelines = [dt_pipe, rf_pipe, ab_pipe, gb_pipe, mlp_pipe]
-pipelines = [xg_pipe]
+pipelines = [gb_pipe]
 best_accuracy=0.0
 best_classifier=0
 best_pipeline=""
@@ -362,7 +366,7 @@ best_pipeline=""
 # Dictionary of pipelines and classifier types for ease of reference
 pipe_dict = {1: 'Decision Tree', 2: 'RandomForest', 3: 'AdaBoost', 4:'GradientBoostedTrees', 5:'svm', 6:'feedforwardnn'}
 #pipe_list = ['Decision Tree', 'RandomForest', 'AdaBoost', 'GradientBoostedTrees', 'feedforwardnn']
-pipe_list = ['xgboost']
+pipe_list = ['GradientBoostedTrees']
 
 
 print("Complete. Pipeline Runtime:", time.time()-start_ts)
@@ -439,7 +443,7 @@ xg_grid = [{'xg_classifier__n_estimators': [int(x) for x in np.linspace(start = 
 
 
 #params = [dt_param, rf_grid, ab_grid, gb_grid, nn_grid]
-params = [xg_grid]
+params = [gb_grid]
 
 if param_tuning == 1:
     
@@ -451,7 +455,7 @@ if param_tuning == 1:
         if exhaustive_search == 1:
             gridsearch = GridSearchCV(pipe, xg_grid, scoring = 'roc_auc', cv=5, verbose=10, n_jobs=-1) 
         else:    
-            gridsearch = RandomizedSearchCV(pipe, param_distributions = grid_param, n_iter=1000, scoring = 'roc_auc', cv=5, verbose=10, n_jobs=-1) 
+            gridsearch = RandomizedSearchCV(pipe, param_distributions = grid_param, n_iter=1260, scoring = 'roc_auc', cv=5, verbose=20, n_jobs=-1) 
         gridsearch.fit(data_train, target_train)
  
         # Get best results        

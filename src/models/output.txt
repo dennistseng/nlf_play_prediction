@@ -4,3 +4,5 @@
 0.7575401992282134
 {'xg_classifier__booster': 'dart', 'xg_classifier__max_depth': 3, 'xg_classifier__n_estimators': 100}
 0.7404610065946987
+{'gb_classifier__n_estimators': 800, 'gb_classifier__min_samples_split': 50, 'gb_classifier__min_samples_leaf': 64, 'gb_classifier__max_features': 'auto', 'gb_classifier__max_depth': 7, 'gb_classifier__loss': 'exponential', 'gb_classifier__learning_rate': 0.01}
+0.751867285000924
