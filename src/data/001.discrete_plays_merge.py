@@ -67,18 +67,24 @@ plays.drop(['fumble_forced', 'fumble_not_forced', 'fumble_out_of_bounds', 'safet
 
 
 # Remove in the interim
-del plays['posteam']
+#del plays['posteam']
+#del plays['GameYear']
+
 del plays['defteam']
 del plays['pass_length']
 del plays['pass_location']
 del plays['run_gap']
 del plays['run_location']
 del plays['Time']
-del plays['GameYear']
+
 del plays['interception']
 
     
 # Create Dummy Data
+
+del plays['game-drive']
+#plays.to_csv('../../data/clean/model_plays_categorical.csv', index = False)
+
 plays['home'] = pd.get_dummies(plays['posteam_type'], drop_first=True)
 plays['game_half'] = pd.get_dummies(plays['game_half'], drop_first=True)
 del plays['posteam_type']
@@ -91,7 +97,7 @@ plays.dropna(inplace = True)
 # Check if any columns have null values
 drives.columns[drives.isna().any()].tolist()
 
-del plays['game-drive']
+
 
 # Double Check Output
 

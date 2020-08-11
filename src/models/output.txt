@@ -6,3 +6,57 @@
 0.7404610065946987
 {'gb_classifier__n_estimators': 800, 'gb_classifier__min_samples_split': 50, 'gb_classifier__min_samples_leaf': 64, 'gb_classifier__max_features': 'auto', 'gb_classifier__max_depth': 7, 'gb_classifier__loss': 'exponential', 'gb_classifier__learning_rate': 0.01}
 0.751867285000924
+{'xg_classifier__subsample': 0.8, 'xg_classifier__n_estimators': 1000, 'xg_classifier__min_child_weight': 1, 'xg_classifier__max_depth': 5, 'xg_classifier__learning_rate': 0.01, 'xg_classifier__gamma': 0, 'xg_classifier__colsample_bytree': 0.8}
+0.7549264508615171
+{'xg_classifier__colsample_bytree': 0.8, 'xg_classifier__early_stopping_rounds': 50, 'xg_classifier__eval_metric': 'auc', 'xg_classifier__eval_set': [        yardline_100  ...  ld_opp_outcome_turnover_on_downs
+113850          80.0  ...                                 0
+59232           18.0  ...                                 0
+88912           80.0  ...                                 1
+141590          60.0  ...                                 0
+30719           51.0  ...                                 0
+...              ...  ...                               ...
+160267          69.0  ...                                 0
+112443          80.0  ...                                 0
+160731          43.0  ...                                 0
+209358          71.0  ...                                 0
+156731          43.0  ...                                 0
+
+[48707 rows x 40 columns], 113850    0
+59232     0
+88912     0
+141590    0
+30719     1
+         ..
+160267    1
+112443    0
+160731    1
+209358    0
+156731    0
+Name: target, Length: 48707, dtype: int8], 'xg_classifier__gamma': 0, 'xg_classifier__learning_rate': 0.01, 'xg_classifier__max_depth': 5, 'xg_classifier__min_child_weight': 1, 'xg_classifier__n_estimators': 1000, 'xg_classifier__subsample': 0.8}
+0.7544147922513205
+{'xg_classifier__colsample_bytree': 0.8, 'xg_classifier__gamma': 0, 'xg_classifier__learning_rate': 0.01, 'xg_classifier__max_depth': 5, 'xg_classifier__min_child_weight': 1, 'xg_classifier__n_estimators': 1400, 'xg_classifier__subsample': 0.8}
+0.7559668976081707
+{'xg_classifier__colsample_bytree': 0.8, 'xg_classifier__gamma': 0, 'xg_classifier__learning_rate': 0.01, 'xg_classifier__max_depth': 7, 'xg_classifier__min_child_weight': 7, 'xg_classifier__n_estimators': 1400, 'xg_classifier__subsample': 0.8}
+0.7546496373544791
+{'xg_classifier__booster': 'gbtree', 'xg_classifier__colsample_bytree': 0.8, 'xg_classifier__gamma': 0.1, 'xg_classifier__learning_rate': 0.01, 'xg_classifier__max_depth': 7, 'xg_classifier__min_child_weight': 7, 'xg_classifier__n_estimators': 1400, 'xg_classifier__subsample': 0.8}
+0.7553243997127993
+{'xg_classifier__booster': 'gbtree', 'xg_classifier__colsample_bytree': 0.6, 'xg_classifier__gamma': 0, 'xg_classifier__learning_rate': 0.01, 'xg_classifier__max_depth': 7, 'xg_classifier__min_child_weight': 7, 'xg_classifier__n_estimators': 1400, 'xg_classifier__subsample': 0.9}
+0.75606150123143
+{'xg_classifier__booster': 'gbtree', 'xg_classifier__colsample_bytree': 0.6, 'xg_classifier__gamma': 0, 'xg_classifier__learning_rate': 0.01, 'xg_classifier__max_depth': 7, 'xg_classifier__min_child_weight': 7, 'xg_classifier__min_split_loss': 2, 'xg_classifier__n_estimators': 1400, 'xg_classifier__subsample': 0.9}
+0.754755650514557
+{'xg_classifier__booster': 'gbtree', 'xg_classifier__colsample_bytree': 0.6, 'xg_classifier__gamma': 0, 'xg_classifier__learning_rate': 0.01, 'xg_classifier__max_depth': 7, 'xg_classifier__min_child_weight': 7, 'xg_classifier__min_split_loss': 2, 'xg_classifier__n_estimators': 1400, 'xg_classifier__reg_alpha': 0.5, 'xg_classifier__subsample': 0.9}
+0.7585193611284267
+{'xg_classifier__booster': 'gbtree', 'xg_classifier__colsample_bytree': 0.6, 'xg_classifier__gamma': 0, 'xg_classifier__learning_rate': 0.01, 'xg_classifier__max_depth': 7, 'xg_classifier__min_child_weight': 7, 'xg_classifier__min_split_loss': 2, 'xg_classifier__n_estimators': 1400, 'xg_classifier__reg_alpha': 0.05, 'xg_classifier__reg_lambda': 0, 'xg_classifier__subsample': 0.9}
+0.7576108706003041
+{'dt_classifier__class_weight': None, 'dt_classifier__criterion': 'gini', 'dt_classifier__max_depth': 9, 'dt_classifier__max_features': None, 'dt_classifier__min_samples_leaf': 128, 'dt_classifier__min_samples_split': 2, 'dt_classifier__splitter': 'best'}
+0.7272115811945976
+{'ab_classifier__algorithm': 'SAMME.R', 'ab_classifier__learning_rate': 0.5, 'ab_classifier__n_estimators': 600}
+0.722258372218872
+OrderedDict([('gb_classifier__learning_rate', 0.3958765328906512), ('gb_classifier__loss', 'deviance'), ('gb_classifier__max_depth', 7), ('gb_classifier__max_features', None), ('gb_classifier__min_samples_leaf', 105), ('gb_classifier__min_samples_split', 66), ('gb_classifier__n_estimators', 862)])
+0.7021166636596923
+OrderedDict([('lgbm_classifier__boosting_type', 'gbdt'), ('lgbm_classifier__class_weight', 'balanced'), ('lgbm_classifier__colsample_bytree', 0.7617282673864171), ('lgbm_classifier__learning_rate', 0.726286949336167), ('lgbm_classifier__min_split_gain', 0.38055849822778576), ('lgbm_classifier__n_iterations', 7), ('lgbm_classifier__num_leaves', 5), ('lgbm_classifier__reg_alpha', 0.33843672553038434), ('lgbm_classifier__reg_lambda', 0.1606486143514291), ('lgbm_classifier__subsample', 0.2665159287451113), ('lgbm_classifier__subsample_freq', 74), ('lgbm_classifier__tree_learner', 'feature')])
+0.7072890027937696
+OrderedDict([('lgbm_classifier__boosting_type', 'gbdt'), ('lgbm_classifier__class_weight', None), ('lgbm_classifier__colsample_bytree', 0.8436227416617349), ('lgbm_classifier__learning_rate', 0.06757615716871256), ('lgbm_classifier__min_split_gain', 0.9), ('lgbm_classifier__n_iterations', 1), ('lgbm_classifier__num_leaves', 44), ('lgbm_classifier__reg_alpha', 1.0), ('lgbm_classifier__reg_lambda', 1.0), ('lgbm_classifier__subsample', 0.9), ('lgbm_classifier__subsample_freq', 1), ('lgbm_classifier__tree_learner', 'feature')])
+0.7564007195248655
+{'knn_classifier__algorithm': 'auto', 'knn_classifier__n_neighbors': 11, 'knn_classifier__p': 1, 'knn_classifier__weights': 'uniform'}
+0.6632578114248151

@@ -116,6 +116,10 @@ raw_play_by_play = pd.merge(raw_play_by_play, madden, how='left', left_on=['deft
 raw_play_by_play.drop(['Team', 'WR', 'TE', 'RT', 'RG', 'QB', 'P', 'LT', 'LG', 'K', 'HB', 'C', 'year'], axis = 1, inplace = True)
 raw_play_by_play.rename(columns = {'CB':'def_cb', 'DT':'def_dt', 'FS' : 'def_fs', 'LE':'def_le', 'LOLB':'def_lolb', 'MLB': 'def_mlb', 'RE':'def_re', 'ROLB':'def_rolb', 'SS':'def_ss'}, inplace = True)
 
+# Calculate the difference in ratings between 
+
+
+
 # Merge betting and probability data
 raw_play_by_play = pd.merge(raw_play_by_play, wpa_data, how='inner', on=['game_id', 'play_id'])
 
