@@ -151,6 +151,7 @@ data['target'] = data['target'].astype('category').cat.codes
 # Create 2019 Bears Dataset
 bears = data.copy()
 bears = bears[((bears['posteam'] == 'CHI') & (bears['GameYear'] == 2019))]
+
 del data['posteam']
 del data['GameYear']
 del bears['posteam']
@@ -884,6 +885,8 @@ if cross_val == 0:
     print("XGBoost Train Accuracy:",clf.score(data, target))
     print('XGBoost Test Acc:', scores_ACC)
     print(classification_report(bears_target, bears_predictions))
+    bears_predictions = pd.DataFrame(bears_predictions, columns = ['Predicted'])
+    bears_predictions.to_csv('Bears Predictions.csv')
     
     # SHAP Implementation    
     xg_model = clf.named_steps['xg_classifier']
